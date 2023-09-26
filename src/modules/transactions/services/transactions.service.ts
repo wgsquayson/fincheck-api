@@ -5,6 +5,7 @@ import { TransactionsRepository } from 'src/shared/database/repositories/transac
 import { ValidateBankAccountOwnershipService } from '../../bank-accounts/services/validate-bank-account-ownership.service';
 import { ValidateCategoryOwnershipService } from '../../categories/services/validate-category-ownership.service';
 import { ValidateTransactionOwnershipService } from './validate-transaction-ownership.service';
+import { TransactionType } from '@prisma/client';
 
 @Injectable()
 export class TransactionsService {
@@ -30,8 +31,28 @@ export class TransactionsService {
     });
   }
 
-  findAllByUserId(userId: string) {
-    return this.transactionsRepository.findAllByUserId({ where: { userId } });
+  findAllByUserId(
+    userId: string,
+    filters: {
+      month: number;
+      year: number;
+      bankAccountId?: string;
+      categoryId?: string;
+      type?: TransactionType;
+    },
+  ) {
+    return this.transactionsRepository.findAllByUserId({
+      where: {
+        userId,
+        date: {
+          gte: new Date(Date.UTC(filters.year, filters.month)),
+          lt: new Date(Date.UTC(filters.year, filters.month + 1)),
+        },
+        bankAccountId: filters.bankAccountId,
+        categoryId: filters.categoryId,
+        type: filters.type,
+      },
+    });
   }
 
   async update(
